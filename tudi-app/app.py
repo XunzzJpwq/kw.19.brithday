@@ -552,8 +552,10 @@ function fadeIn(audio, target, dur){
   if (p && p.catch) p.catch(() => {});
   const t0 = performance.now();
   (function step(now){
-    const k = Math.min(1, (now - t0) / dur);
-    audio.volume = muted ? 0 : target * k;
+    // 双重保险：锁定 k 在 0 到 1 之间
+    const k = Math.max(0, Math.min(1, (now - t0) / dur));
+    // 绝对不允许出现负数音量
+    audio.volume = muted ? 0 : Math.max(0, target * k);
     if (k < 1) requestAnimationFrame(step);
   })(t0);
 }
@@ -562,18 +564,14 @@ function fadeOut(audio, dur){
   dur = dur || 1200;
   const t0 = performance.now(), v0 = audio.volume;
   (function step(now){
-    const k = Math.min(1, (now - t0) / dur);
-    audio.volume = Math.max(v0 * (1 - k), 0);
+    // 双重保险：锁定 k 在 0 到 1 之间
+    const k = Math.max(0, Math.min(1, (now - t0) / dur));
+    // 绝对不允许出现负数音量
+    audio.volume = muted ? 0 : Math.max(0, v0 * (1 - k));
     if (k < 1) requestAnimationFrame(step);
     else audio.pause();
   })(t0);
 }
-
-document.getElementById('mute-btn').addEventListener('click', function(){
-  muted = !muted;
-  this.textContent = muted ? '🔇' : '🔊';
-  [bgm1, bgm2].forEach(a => { a.muted = muted; });
-});
 
 /* =========================================================
    场景切换

@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """
 张凯雯 19 岁生日祝福页 —— 单文件 Flask 应用
-背景：紫粉星空感 · 宽幅流动极光 + 星云 + 星光粒子
+背景：实景极光底图（static/bg_aurora.jpg）· 缓慢推拉 + 呼吸光晕 + 星点/流星
 流程：星光凝聚开场 → 打字机贺卡 → 许愿卡展开(不可改) → 一口气吹灭蜡烛 → 常驻互动
 """
 
@@ -25,18 +25,48 @@ HTML = r"""<!DOCTYPE html>
 *{box-sizing:border-box; -webkit-tap-highlight-color:transparent;}
 html,body{height:100%; margin:0;}
 body{
-  background:#03040c;
+  background:#04040e;
   color: var(--cream);
   font-family:"PingFang SC","Microsoft YaHei","Noto Sans SC",system-ui,sans-serif;
   overflow:hidden;
 }
 
-/* ===== 极光层：blur 降低、加亮，让带子更清晰旷阔 ===== */
-#bg-aurora{
-  position:fixed; inset:-8%;
-  z-index:0;
-  display:block; pointer-events:none;
-  filter: blur(14px) saturate(1.55) brightness(1.08);
+/* ===== 背景：极光实景底图 + 缓慢推拉 ===== */
+#bg-photo{
+  position:fixed; inset:-7%;
+  z-index:0; pointer-events:none;
+  background-image:url("/static/bg_aurora.jpg");
+  background-size:cover;
+  background-position:center 42%;
+  animation: bgDrift 72s ease-in-out infinite alternate;
+  will-change: transform;
+  transform: translateZ(0);
+}
+@keyframes bgDrift{
+  0%   { transform: scale(1.03) translate3d(-1.2%, -0.4%, 0); }
+  100% { transform: scale(1.11) translate3d( 1.2%,  0.9%, 0); }
+}
+/* 极光呼吸光晕，让画面活起来 */
+#bg-glow{
+  position:fixed; inset:0; z-index:1; pointer-events:none;
+  background:
+    radial-gradient(58% 46% at 50% 26%, rgba(196,130,255,.16) 0%, rgba(196,130,255,0) 72%),
+    radial-gradient(48% 40% at 78% 18%, rgba(140,255,214,.10) 0%, rgba(140,255,214,0) 74%);
+  animation: glowPulse 11s ease-in-out infinite alternate;
+}
+@keyframes glowPulse{ from{ opacity:.45; } to{ opacity:1; } }
+/* 暗角 / 颗粒 */
+#bg-vignette{
+  position:fixed; inset:0; z-index:2; pointer-events:none;
+  background:
+    radial-gradient(132% 110% at 50% 42%, rgba(0,0,0,0) 52%, rgba(3,4,12,.16) 82%, rgba(1,2,7,.36) 100%),
+    linear-gradient(180deg, rgba(4,4,14,.16) 0%, rgba(4,4,14,0) 18%, rgba(4,4,14,0) 70%, rgba(3,3,10,.22) 100%);
+}
+#bg-grain{
+  position:fixed; inset:0; z-index:3; pointer-events:none;
+  opacity:.055;
+  background-image:url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='160' height='160' filter='url(%23n)' opacity='0.55'/%3E%3C/svg%3E");
+  background-size:160px 160px;
 }
 /* ===== 星光层 ===== */
 #bg-stars{
@@ -51,22 +81,29 @@ body{
 #gate{
   position:fixed; inset:0; z-index:100;
   display:flex; align-items:center; justify-content:center;
-  background: radial-gradient(900px 700px at 50% 42%, rgba(20,30,60,.35) 0%, rgba(4,8,18,.85) 85%);
-  backdrop-filter: blur(2px);
+  background: radial-gradient(680px 560px at 50% 46%, rgba(8,10,26,.16) 0%, rgba(3,6,16,.56) 90%);
   transition: opacity .9s ease;
   padding:24px;
 }
 #gate.hide{opacity:0; pointer-events:none;}
-.gate-inner{text-align:center; max-width:520px;}
+.gate-inner{
+  text-align:center; max-width:520px;
+  padding:30px 34px 26px; border-radius:26px;
+  background:linear-gradient(160deg, rgba(34,24,72,.82) 0%, rgba(12,10,32,.88) 65%, rgba(7,7,20,.90) 100%);
+  border:1px solid rgba(186,158,255,.34);
+  box-shadow:0 24px 70px rgba(0,0,0,.5), 0 0 60px rgba(160,110,255,.14), inset 0 1px 0 rgba(255,255,255,.07);
+  backdrop-filter:blur(9px) saturate(1.15);
+}
 .gate-icon{font-size:54px; margin-bottom:10px; animation:floaty 3s ease-in-out infinite;}
 @keyframes floaty{0%,100%{transform:translateY(0);}50%{transform:translateY(-10px);}}
 .gate-inner h1{
+  text-shadow:0 2px 10px rgba(0,0,0,.75), 0 0 34px rgba(0,0,0,.6);
   font-size:clamp(22px,5.5vw,32px); margin:0 0 10px;
-  background:linear-gradient(90deg,var(--gold),var(--teal-l),var(--violet-l));
+  background:linear-gradient(90deg,#FFE9A8,#86E6D6,#FFC2D6);
   -webkit-background-clip:text; background-clip:text; color:transparent;
 }
-.gate-inner p{color:#a9b8d0; font-size:14px; margin:6px 0 22px;}
-.gate-hint{font-size:12px !important; color:#6f7f9a !important; margin-top:16px !important;}
+.gate-inner p{color:#dbe4f3; font-size:14px; margin:6px 0 22px; text-shadow:0 1px 4px rgba(0,0,0,.85), 0 0 18px rgba(0,0,0,.6);}
+.gate-hint{font-size:12px !important; color:#9db0c8 !important; margin-top:16px !important; text-shadow:0 1px 4px rgba(0,0,0,.9) !important;}
 
 button{font-family:inherit; cursor:pointer; border:none; outline:none;}
 
@@ -99,7 +136,11 @@ button{font-family:inherit; cursor:pointer; border:none; outline:none;}
 
 /* 场景1：粒子文字 */
 #scene-intro{cursor:default;}
-#text-canvas{width:100%; height:100%;}
+.intro-scrim{
+  position:absolute; inset:0; z-index:0; pointer-events:none;
+  background:radial-gradient(62% 46% at 50% 50%, rgba(3,5,16,.60) 0%, rgba(3,5,16,.44) 42%, rgba(3,5,16,.24) 66%, rgba(3,5,16,.08) 86%, rgba(3,5,16,0) 100%);
+}
+#text-canvas{width:100%; height:100%; position:relative; z-index:1;}
 
 /* 卡片通用 */
 .card{
@@ -153,7 +194,7 @@ button{font-family:inherit; cursor:pointer; border:none; outline:none;}
 .cake-area{display:flex; flex-direction:column; align-items:center; gap:18px; text-align:center;}
 .cake-hint{
   font-size:clamp(13px,3.4vw,15px); color:var(--gold); margin:0; line-height:1.7;
-  text-shadow:0 0 18px rgba(245,215,110,.35); max-width:420px;
+  text-shadow:0 1px 4px rgba(0,0,0,.9), 0 0 18px rgba(245,215,110,.45); max-width:420px;
 }
 .cake{display:flex; flex-direction:column; align-items:center; filter:drop-shadow(0 18px 30px rgba(0,0,0,.5));}
 .candle-row{display:flex; justify-content:space-around; align-items:flex-end; height:46px; padding:0 6px;}
@@ -196,7 +237,15 @@ button{font-family:inherit; cursor:pointer; border:none; outline:none;}
   60%{transform:scale(.7) translateY(-8px); opacity:.5;}
   100%{transform:scale(.1) translateY(-18px); opacity:0;}
 }
-.cake-tip{font-size:13px; color:#a394bf; margin:0;}
+.cake-tip{font-size:13px; color:#c3b8d8; margin:0; text-shadow:0 1px 4px rgba(0,0,0,.85);}
+
+/* 场景4/5 的暗底，保证亮极光上文字可读 */
+#scene-cake{
+  background:radial-gradient(46% 40% at 50% 50%, rgba(3,4,12,.74) 0%, rgba(3,4,12,.42) 52%, rgba(3,4,12,.10) 76%, rgba(3,4,12,0) 100%);
+}
+#scene-final{
+  background:radial-gradient(40% 34% at 50% 50%, rgba(2,3,10,.82) 0%, rgba(2,3,10,.50) 54%, rgba(2,3,10,.14) 78%, rgba(2,3,10,0) 100%);
+}
 
 /* 场景5：常驻 */
 .final-wrap{text-align:center; max-width:560px;}
@@ -204,8 +253,9 @@ button{font-family:inherit; cursor:pointer; border:none; outline:none;}
   font-size:clamp(20px,5vw,28px); margin:0 0 8px;
   background:linear-gradient(90deg,var(--gold),var(--pink),var(--violet-l));
   -webkit-background-clip:text; background-clip:text; color:transparent;
+  filter:drop-shadow(0 2px 6px rgba(0,0,0,.8));
 }
-.final-sub{font-size:15px; color:#c4b8d8; margin:0 0 18px;}
+.final-sub{font-size:15px; color:#efe6ff; margin:0 0 18px; text-shadow:0 1px 6px rgba(0,0,0,.85);}
 .final-wish{
   font-size:15px; line-height:1.8; color:var(--cream);
   padding:14px 18px; border-radius:14px;
@@ -213,7 +263,7 @@ button{font-family:inherit; cursor:pointer; border:none; outline:none;}
   margin-bottom:22px; word-break:break-word; backdrop-filter: blur(6px);
 }
 .final-btns{display:flex; flex-wrap:wrap; gap:12px; justify-content:center;}
-.final-tip{font-size:12px; color:#7f7495; margin-top:20px;}
+.final-tip{font-size:12px; color:#c2b6d8; margin-top:20px; text-shadow:0 1px 4px rgba(0,0,0,.85);}
 
 /* 页脚重置 */
 .site-footer{
@@ -256,10 +306,13 @@ button{font-family:inherit; cursor:pointer; border:none; outline:none;}
 </head>
 <body>
 
-<!-- 极光层（最底） -->
-<canvas id="bg-aurora"></canvas>
+<!-- 极光底图 -->
+<div id="bg-photo"></div>
+<div id="bg-glow"></div>
+<div id="bg-vignette"></div>
 <!-- 星光层 -->
 <canvas id="bg-stars"></canvas>
+<div id="bg-grain"></div>
 <!-- 烟花 / 特效层 -->
 <canvas id="fx-canvas"></canvas>
 
@@ -279,6 +332,7 @@ button{font-family:inherit; cursor:pointer; border:none; outline:none;}
 
   <!-- 场景1：S1 星光凝聚字幕 -->
   <section id="scene-intro" class="scene active">
+    <div class="intro-scrim"></div>
     <canvas id="text-canvas"></canvas>
   </section>
 
@@ -369,142 +423,6 @@ const DPR = Math.min(window.devicePixelRatio || 1, 2);
 const state = { scene:'intro', cardRunning:false, introDone:false, musicStage2:false };
 
 /* =========================================================
-   极光背景（紫粉星空感 · 宽幅极光带 + 星云）
-   ========================================================= */
-const auroraCv = document.getElementById('bg-aurora');
-const actx     = auroraCv.getContext('2d');
-const ADPR     = 1;
-let AW = innerWidth, AH = innerHeight;
-
-function sizeAurora(){
-  AW = auroraCv.clientWidth  || innerWidth;
-  AH = auroraCv.clientHeight || innerHeight;
-  auroraCv.width  = Math.round(AW * ADPR);
-  auroraCv.height = Math.round(AH * ADPR);
-  actx.setTransform(ADPR, 0, 0, ADPR, 0, 0);
-}
-
-/* 极光带参数（全部紫粉色系 235~345）
-   waves:横向波数  amp:纵向振幅(屏高占比)  spd:流速/方向
-   y:中心高度      thick:向下厚度         a:基准透明度
-   h1/h2:HSL 色相  phase:相位偏移          */
-const AURORA_BANDS = [
-  // 主带：紫粉色，最宽最亮，横贯屏幕
-  { waves:1.4, amp:0.13, spd: 0.20, y:0.40, thick:0.50, a:0.78, h1:272, h2:318, phase:0.0 },
-  // 蓝紫副带：略高
-  { waves:2.0, amp:0.10, spd:-0.16, y:0.30, thick:0.44, a:0.64, h1:235, h2:275, phase:1.7 },
-  // 粉色带：偏低
-  { waves:1.1, amp:0.15, spd: 0.14, y:0.62, thick:0.52, a:0.70, h1:312, h2:346, phase:3.1 },
-  // 细节带：细一点，中间层
-  { waves:2.8, amp:0.085,spd:-0.24, y:0.48, thick:0.36, a:0.50, h1:255, h2:290, phase:4.6 },
-  // 底部粉紫
-  { waves:1.7, amp:0.11, spd: 0.18, y:0.72, thick:0.46, a:0.54, h1:290, h2:330, phase:2.4 },
-];
-
-/* 远景星云光斑 */
-const NEBULAS = [
-  { ux:0.22, uy:0.34, ur:0.55, h:285, a:0.20, spdX:0.00035, spdY:0.00020, phase:0.0 },
-  { ux:0.78, uy:0.52, ur:0.60, h:325, a:0.16, spdX:-0.00025,spdY:0.00030, phase:2.2 },
-  { ux:0.50, uy:0.76, ur:0.68, h:250, a:0.13, spdX:0.00020, spdY:-0.00018,phase:4.1 },
-];
-
-function drawAurora(now){
-  const t = now * 0.001;
-  const W = AW, H = AH;
-
-  /* 深紫夜空底 */
-  actx.globalCompositeOperation = 'source-over';
-  const sky = actx.createLinearGradient(0, 0, 0, H);
-  sky.addColorStop(0,    '#05030f');
-  sky.addColorStop(0.42, '#0c0a22');
-  sky.addColorStop(0.74, '#080618');
-  sky.addColorStop(1,    '#03020a');
-  actx.fillStyle = sky;
-  actx.fillRect(0, 0, W, H);
-
-  /* —— 远景星云 —— */
-  actx.globalCompositeOperation = 'lighter';
-  for (const n of NEBULAS){
-    const cx = W * n.ux + Math.sin(t * n.spdX * 1000 + n.phase) * W * 0.06;
-    const cy = H * n.uy + Math.cos(t * n.spdY * 1000 + n.phase) * H * 0.05;
-    const rr = Math.max(W, H) * n.ur;
-    const aN = n.a * (0.8 + 0.2 * Math.sin(t * 0.4 + n.phase));
-    const g = actx.createRadialGradient(cx, cy, 0, cx, cy, rr);
-    g.addColorStop(0.0, `hsla(${n.h}, 90%, 60%, ${aN})`);
-    g.addColorStop(0.5, `hsla(${n.h}, 90%, 55%, ${aN * 0.35})`);
-    g.addColorStop(1.0, 'rgba(0,0,0,0)');
-    actx.fillStyle = g;
-    actx.fillRect(0, 0, W, H);
-  }
-
-  /* —— 极光带 —— */
-  const N = 80;
-  for (let bi = 0; bi < AURORA_BANDS.length; bi++){
-    const b  = AURORA_BANDS[bi];
-    const wf = (b.waves * Math.PI * 2) / W;
-    const aMod  = 0.72 + 0.28 * Math.sin(t * 0.55 + b.phase * 1.7);
-    const alpha = b.a * aMod;
-
-    const top = [], bot = [], mid = [];
-    for (let i = 0; i <= N; i++){
-      const u = i / N;
-      const x = u * W;
-      const w1 = Math.sin(x * wf + t * b.spd + b.phase);
-      const w2 = Math.sin(x * wf * 2.7 - t * b.spd * 1.4 + b.phase * 1.9);
-      const yc = H * b.y + (w1 * 0.72 + w2 * 0.35) * H * b.amp;
-      top.push([x, yc - H * b.thick * 0.38]);
-      mid.push([x, yc]);
-      bot.push([x, yc + H * b.thick]);
-    }
-
-    /* 主带（水平渐变 + 上下略弱） */
-    actx.beginPath();
-    actx.moveTo(top[0][0], top[0][1]);
-    for (let i = 1; i <= N; i++) actx.lineTo(top[i][0], top[i][1]);
-    for (let i = N; i >= 0; i--) actx.lineTo(bot[i][0], bot[i][1]);
-    actx.closePath();
-
-    const g = actx.createLinearGradient(0, 0, W, 0);
-    g.addColorStop(0.00, `hsla(${b.h1}, 95%, 60%, 0)`);
-    g.addColorStop(0.20, `hsla(${b.h1}, 95%, 60%, ${alpha * 0.88})`);
-    g.addColorStop(0.50, `hsla(${b.h2}, 95%, 70%, ${alpha})`);
-    g.addColorStop(0.80, `hsla(${b.h1}, 95%, 60%, ${alpha * 0.85})`);
-    g.addColorStop(1.00, `hsla(${b.h1}, 95%, 60%, 0)`);
-    actx.fillStyle = g;
-    actx.fill();
-
-    /* 亮丝：沿带子中线画一条高光线，形成极光帘幕层次 */
-    actx.beginPath();
-    actx.moveTo(mid[0][0], mid[0][1]);
-    for (let i = 1; i <= N; i++) actx.lineTo(mid[i][0], mid[i][1]);
-    const lg = actx.createLinearGradient(0, 0, W, 0);
-    lg.addColorStop(0.00, `hsla(${b.h2}, 100%, 80%, 0)`);
-    lg.addColorStop(0.25, `hsla(${b.h2}, 100%, 84%, ${alpha * 0.85})`);
-    lg.addColorStop(0.50, `hsla(${b.h2}, 100%, 90%, ${alpha})`);
-    lg.addColorStop(0.75, `hsla(${b.h2}, 100%, 84%, ${alpha * 0.85})`);
-    lg.addColorStop(1.00, `hsla(${b.h2}, 100%, 80%, 0)`);
-    actx.strokeStyle = lg;
-    actx.lineWidth = 2.6;
-    actx.lineCap = 'round';
-    actx.stroke();
-  }
-
-  /* 顶部氛围辉光 */
-  const halo = actx.createRadialGradient(
-    W * 0.5, H * 0.14, 0,
-    W * 0.5, H * 0.14, Math.max(W, H) * 0.72
-  );
-  halo.addColorStop(0.0, 'rgba(167,139,250,0.16)');
-  halo.addColorStop(0.5, 'rgba(255,179,198,0.07)');
-  halo.addColorStop(1.0, 'rgba(0,0,0,0)');
-  actx.fillStyle = halo;
-  actx.fillRect(0, 0, W, H);
-
-  actx.globalCompositeOperation = 'source-over';
-  requestAnimationFrame(drawAurora);
-}
-
-/* =========================================================
    星光粒子（紫粉为主 + 一点白/青点缀）
    ========================================================= */
 const starCv  = document.getElementById('bg-stars');
@@ -518,7 +436,7 @@ function initStars(){
   starCv.style.height = innerHeight + 'px';
   starCtx.setTransform(DPR, 0, 0, DPR, 0, 0);
 
-  const count = Math.min(150, Math.floor(innerWidth * innerHeight / 11000));
+  const count = Math.min(120, Math.floor(innerWidth * innerHeight / 16000));
   starParticles = [];
   for (let i = 0; i < count; i++){
     const r = Math.random();
@@ -532,7 +450,7 @@ function initStars(){
            : r < 0.70 ? '#FFB3C6'
            : r < 0.88 ? '#F1F5F9'
            : '#4DD0C4',
-      alpha: Math.random() * 0.55 + 0.25,
+      alpha: Math.random() * 0.35 + 0.18,
       phase: Math.random() * Math.PI * 2,
       speed: Math.random() * 0.02 + 0.008
     });
@@ -704,6 +622,10 @@ function playIntroText(){
   canvas.height = H * DPR;
   ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
 
+  const s1 = Math.min(W * 0.17, 92);
+  const s2 = Math.min(W * 0.12, 66);
+
+  /* 取样：把两行字画到离屏画布，再按像素取点当作粒子目标 */
   const off = document.createElement('canvas');
   off.width = W; off.height = H;
   const octx = off.getContext('2d');
@@ -711,11 +633,9 @@ function playIntroText(){
   octx.textAlign = 'center';
   octx.textBaseline = 'middle';
 
-  const s1 = Math.min(W * 0.17, 92);
   octx.font = '700 ' + s1 + 'px "PingFang SC","Microsoft YaHei",sans-serif';
   octx.fillText('张凯雯', W / 2, H / 2 - s1 * 0.62);
 
-  const s2 = Math.min(W * 0.115, 64);
   octx.font = '700 ' + s2 + 'px "PingFang SC","Microsoft YaHei",sans-serif';
   octx.fillText('19 岁生日快乐', W / 2, H / 2 + s1 * 0.55);
 
@@ -728,30 +648,99 @@ function playIntroText(){
     }
   }
 
+  /* 彩色星空：金 / 珊瑚粉 / 薄荷青 / 薰衣草紫 / 月白 */
+  const PALETTE = [
+    { c:'#FFC061', w:0.24 },  // 琥珀金
+    { c:'#FF8FB2', w:0.22 },  // 桃粉
+    { c:'#6FE7D6', w:0.22 },  // 青绿
+    { c:'#A896FF', w:0.20 },  // 紫罗兰
+    { c:'#FFFFFF', w:0.12 }   // 少量高光
+  ];
+  function pickColor(){
+    let r = Math.random(), acc = 0;
+    for (const p of PALETTE){ acc += p.w; if (r <= acc) return p.c; }
+    return PALETTE[PALETTE.length - 1].c;
+  }
+
   const parts = targets.map(t => {
-    const r = Math.random();
+    const starry = Math.random() < 0.12;   /* 少量做成小十字星 */
+    const small = t.y > H / 2;             /* 第二行字更小，粒子给粗一点 */
     return {
       x: Math.random() * W, y: Math.random() * H,
       tx: t.x, ty: t.y,
-      color: r < 0.45 ? '#F5D76E' : (r < 0.80 ? '#C4A7FF' : '#FFB3C6'),
-      size: Math.random() * 1.5 + 0.6
+      color: pickColor(),
+      size: starry ? Math.random() * 1.2 + 2.2
+                   : (small ? Math.random() * 0.9 + 1.45 : Math.random() * 1.0 + 1.15),
+      starry,
+      ph: Math.random() * 6.283,
+      tw: Math.random() * 0.6 + 0.4        /* 闪烁幅度 */
     };
   });
 
   const t0 = performance.now();
+  const CONV = 0.065;
+
   function frame(now){
     const elapsed = now - t0;
+    const t = elapsed * 0.001;
     ctx.clearRect(0, 0, W, H);
+
+    /* 先收敛位置 */
     for (const p of parts){
-      p.x += (p.tx - p.x) * 0.065;
-      p.y += (p.ty - p.y) * 0.065;
-      ctx.globalAlpha = 0.92;
+      p.x += (p.tx - p.x) * CONV;
+      p.y += (p.ty - p.y) * CONV;
+    }
+
+    /* ① 极淡的彩色辉光（lighter，透明度压很低，避免叠成一团白） */
+    ctx.globalCompositeOperation = 'lighter';
+    for (const p of parts){
+      const a = 0.07 + 0.04 * Math.sin(t * 2.1 + p.ph) * p.tw;
+      ctx.globalAlpha = a;
       ctx.fillStyle = p.color;
       ctx.beginPath();
-      ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+      ctx.arc(p.x, p.y, p.size * 1.95, 0, Math.PI * 2);
+      ctx.fill();
+    }
+
+    /* ② 一层很淡的暗底，把笔画从亮星云上分离出来 */
+    ctx.globalCompositeOperation = 'source-over';
+    ctx.fillStyle = 'rgba(4,6,18,1)';
+    /* 汇集中途不压暗（否则像一串圆环），字成形后才逐渐托底 */
+    const darkA = 0.26 * Math.min(1, Math.max(0, (elapsed - 700) / 900));
+    ctx.globalAlpha = darkA;
+    for (const p of parts){
+      ctx.beginPath();
+      ctx.arc(p.x, p.y, p.size * 1.5, 0, Math.PI * 2);
       ctx.fill();
     }
     ctx.globalAlpha = 1;
+
+    /* ③ 实心粒子本体（source-over，颜色不被加亮洗掉） */
+    for (const p of parts){
+      const pulse = 0.86 + 0.14 * Math.sin(t * 2.6 + p.ph);
+      ctx.globalAlpha = Math.min(1, pulse);
+      ctx.fillStyle = p.color;
+      if (p.starry){
+        const r = p.size * 0.95;
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, r * 0.42, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.strokeStyle = p.color;
+        ctx.lineWidth = 0.9;
+        ctx.beginPath();
+        ctx.moveTo(p.x - r, p.y); ctx.lineTo(p.x + r, p.y);
+        ctx.moveTo(p.x, p.y - r); ctx.lineTo(p.x, p.y + r);
+        ctx.stroke();
+      } else {
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, p.size * 0.95, 0, Math.PI * 2);
+        ctx.fill();
+      }
+    }
+
+    ctx.globalAlpha = 1;
+    ctx.globalCompositeOperation = 'source-over';
+
     if (elapsed < 4200){
       introRaf = requestAnimationFrame(frame);
     } else {
@@ -997,9 +986,6 @@ document.getElementById('enter-btn').addEventListener('click', () => {
    初始化
    ========================================================= */
 function boot(){
-  sizeAurora();
-  requestAnimationFrame(drawAurora);
-
   initStars();
   requestAnimationFrame(drawStars);
 
@@ -1011,7 +997,6 @@ function boot(){
 }
 
 window.addEventListener('resize', () => {
-  sizeAurora();
   initStars();
   resizeFx();
 });
